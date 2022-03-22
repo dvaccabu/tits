@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -9,11 +11,11 @@ import (
 
 // album represents data about a record album.
 type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
-	Cover  string  `json:"cover"`
+	ID     string      `json:"id"`
+	Title  string      `json:"title"`
+	Artist string      `json:"artist"`
+	Price  json.Number `json:"price"`
+	Cover  string      `json:"cover"`
 }
 
 // albums slice to seed record album data.
@@ -55,6 +57,7 @@ func postAlbums(c *gin.Context) {
 	// Call BindJSON to bind the received JSON to
 	// newAlbum.
 	if err := c.BindJSON(&newAlbum); err != nil {
+		fmt.Println(err)
 		return
 	}
 
