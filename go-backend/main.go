@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -11,11 +10,11 @@ import (
 
 // album represents data about a record album.
 type album struct {
-	ID     string      `json:"id"`
-	Title  string      `json:"title"`
-	Artist string      `json:"artist"`
-	Price  json.Number `json:"price"`
-	Cover  string      `json:"cover"`
+	ID     string  `json:"id"`
+	Title  string  `json:"title"`
+	Artist string  `json:"artist"`
+	Price  float64 `json:"price"`
+	Cover  string  `json:"cover"`
 }
 
 // albums slice to seed record album data.
@@ -41,6 +40,7 @@ func main() {
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumByID)
 	router.POST("/albums", postAlbums)
+	router.DELETE("/albums/:id", deleteAlbumByID)
 
 	router.Run("localhost:8080")
 }
@@ -78,6 +78,26 @@ func getAlbumByID(c *gin.Context) {
 			c.IndentedJSON(http.StatusOK, a)
 			return
 		}
+	}
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
+}
+
+// deleteAlbumByID locates the album whose ID value matches the id
+// parameter sent by the client, then removes that album.
+func deleteAlbumByID(c *gin.Context) {
+	id := c.Param("id")
+	count := 0
+
+	// Loop through the list of albums, looking for
+	// an album whose ID value matches the parameter.
+	for _, a := range albums {
+		if a.ID == id {
+			copy(albums[count:], albums[count+1:]) // Shift a[i+1:] left one index.
+			albums = albums[:len(albums)-1]
+			c.IndentedJSON(http.StatusOK, a)
+			return
+		}
+		count++
 	}
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "album not found"})
 }

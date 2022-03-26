@@ -19,6 +19,14 @@ import TextField from '@mui/material/TextField';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 
+interface Album {
+  id: string;
+  title: string;
+  artist: string;
+  price: number;
+  cover: string;
+}
+
 function Copyright() {
   return (
     <Typography variant="body2" color="text.secondary" align="center">
@@ -33,7 +41,7 @@ function Copyright() {
 }
 
 function Album(props: any) {
-  const cards: [] = props.cards;
+  const cards: Album[] = props.cards;
   const open: boolean = props.open;
   const handlers : any = props.handlers;
   return (
@@ -109,6 +117,7 @@ function Album(props: any) {
                   <CardActions>
                     <Button size="small">View</Button>
                     <Button size="small">Edit</Button>
+                    <Button onClick={() => handlers.handleDelete(card.id)} size="small">Delete</Button>
                   </CardActions>
                 </Card>
               </Grid>
@@ -235,7 +244,7 @@ function App() {
   const [open, setOpen] = React.useState(false);
   const [error, setError] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<Album[]>([]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -243,12 +252,12 @@ function App() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const newAlbum = {
-      id: data.get('id'),
-      title: data.get('title'),
-      artist: data.get('artist'),
+    const newAlbum: Album = {
+      id: data.get('id')?.toString() || "",
+      title: data.get('title')?.toString() || "",
+      artist: data.get('artist')?.toString() || "",
       price: parseFloat(data.get('price')?.toString() || ""),
-      cover: data.get('cover')
+      cover: data.get('cover')?.toString() || ""
     }
     const requestOptions = {
       method: 'POST',
@@ -257,9 +266,25 @@ function App() {
     };
     fetch('http://localhost:8080/albums', requestOptions)
       .then(response => response.json())
-      .then(data => console.log(data));
+      .then((data: Album) => {
+        const tmp = [...items, data];
+        setItems(tmp);
+      });
     setOpen(false);
   };
+
+  const handleDelete = (id: number) => {
+    const requestOptions = {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    };
+    fetch('http://localhost:8080/albums/'+id, requestOptions)
+      .then(response => response.json())
+      .then((data: Album) => {
+        const tmp = items.filter((album) => album.id !== data.id);
+        setItems(tmp);
+      });
+  }
 
   // Note: the empty deps array [] means
   // this useEffect will run once
@@ -268,7 +293,7 @@ function App() {
     fetch("http://localhost:8080/albums")
       .then(res => res.json())
       .then(
-        (result) => {
+        (result: Album[]) => {
           setIsLoaded(true);
           setItems(result); 
         },
@@ -288,7 +313,7 @@ function App() {
   } else if (!isLoaded) {
     return <div>Loading...</div>;
   } else {
-    return <Album cards={items} open={open} handlers={{handleOpen, handleClose, handleSubmit}} />;
+    return <Album cards={items} open={open} handlers={{handleOpen, handleClose, handleSubmit, handleDelete}} />;
   }
 }
 
